@@ -37,7 +37,7 @@ def url_validation(url):
 
     if 'http://youtu.be' in url or \
        'https://www.youtube.com' in url:
-       return True
+        return True
 
     return False
 
@@ -127,13 +127,21 @@ def get_multiple_songs():
     pass
 
 
-def get_music(url):
+def get_music(system_arguments):
     # TODO: documentation
     '''
     '''
 
     # TODO: determine if it's a playlist
-    get_single_song(url)
+    # system_arguments_length = len(system_arguments)
+
+    # iterate through every system argument
+    for url in system_arguments:
+        # check if system argument is a valid url
+        if url_validation(url):
+            get_single_song(url)
+        else:
+            print INVALID_URL
 
 
 def main(system_arguments):
@@ -150,15 +158,7 @@ def main(system_arguments):
         print NO_URL_SUPPLIED
         return
 
-    # iterate through every system argument
-    for i in xrange(1, system_arguments_length):
-        url = system_arguments[i]
-
-        # check if system argument is a valid url
-        if url_validation(url):
-            get_music(url)
-        else:
-            print INVALID_URL
+    get_music(system_arguments[1:])
 
     print GOODBYE
 
