@@ -11,6 +11,7 @@
 
 
 # imports
+import os
 import sys
 
 import requests
@@ -20,10 +21,13 @@ from bs4 import BeautifulSoup
 
 # constant variables
 # TODO: format messages
-BASE_URL = 'http://www.youtube-mp3.org'
+BASE_YOUTUBE_MP3_URL = 'http://www.youtube-mp3.org'
+BASE_YOUTUBE_URL = 'http://www.youtube.com'
+
+DEFAULT_DIRECTORY = 'music/'
 
 PLAYLIST = 'playlist'
-VIDEO = 'video'
+SONG = 'song'
 JSON = 'json'
 INVALID = 'invalid'
 
@@ -31,8 +35,8 @@ HELLO = '\nHello!\n\n'
 GOODBYE = '\n\nGoodbye!\n'
 NO_URL_SUPPLIED = 'No url supplied!'
 INVALID_URL = 'Invalid url!'
-DOWNLOADING = "Downloading: '{}'"
-DOWNLOAD_FINISHED = 'Download finished!\n'
+DOWNLOADING = "Downloading: '{}' {}."
+DOWNLOAD_FINISHED = '{} {} download finished!\n'
 
 
 # functions
@@ -44,8 +48,8 @@ def url_validation(url):
     if not isinstance(url, type('')):
         return False
 
-    if 'http://youtu.be' in url or \
-       'https://www.youtube.com' in url:
+    if 'youtu.be' in url or \
+       'youtube.com' in url:
         return True
 
     return False
@@ -62,9 +66,9 @@ def get_url_type(url):
         if 'list=' in url:
             return PLAYLIST
 
-        # check if is a youtube video
+        # check if is a youtube song
         if '?v=' in url:
-            return VIDEO
+            return SONG
 
     # TODO: check if is a json file
     # return JSON
@@ -72,12 +76,43 @@ def get_url_type(url):
     return INVALID
 
 
-def convert_playlist_to_list():
+def convert_playlist_to_dict(url):
     # TODO: documentation
     '''
     '''
 
-    pass
+    songs = {}
+    songs_urls = []
+
+    # TEST
+    # HARDCODED FOR TESTING REASONS
+    url = 'https://www.youtube.com/playlist?list=PL49BB38CDC673E900'
+
+    session = dryscrape.Session()
+    session.visit(url)
+    response = session.body()
+    soup = BeautifulSoup(response)
+
+    # TEST
+    playlist_name = soup.find_all('meta')[0].get('content')
+    songs['playlist_name'] = playlist_name
+    for link in soup.find_all('a'):
+        link = link.get('href')
+        if '/watch?v=' in link:
+            link = link.split('&list')[0]
+            song_url = BASE_YOUTUBE_URL + link
+            if song_url not in songs_urls:
+                songs_urls.append(song_url)
+
+    # TODO: remove saving log file
+    data = str(soup)
+    f = open('log.html', 'w')
+    f.write(data)
+    f.close()
+
+    songs['songs_urls'] = songs_urls
+
+    return songs
 
 
 def convert_json_to_list():
@@ -97,7 +132,7 @@ def get_download_data(url):
     song_id = url.split('?v=')[-1]
 
     # TODO: documentation
-    destination_url = '{}/?c#v={}'.format(BASE_URL, song_id)
+    destination_url = '{}/?c#v={}'.format(BASE_YOUTUBE_MP3_URL, song_id)
     session = dryscrape.Session()
     session.visit(destination_url)
     response = session.body()
@@ -123,7 +158,7 @@ def get_download_data(url):
             download_url = link
             break
 
-    download_url = '{}{}'.format(BASE_URL, download_url)
+    download_url = '{}{}'.format(BASE_YOUTUBE_MP3_URL, download_url)
 
     data = {
         'title': title,
@@ -133,7 +168,7 @@ def get_download_data(url):
     return data
 
 
-def download_song(download_data):
+def download_song(download_data, directory=DEFAULT_DIRECTORY):
     # TODO: documentation
     '''
     '''
@@ -141,39 +176,53 @@ def download_song(download_data):
     title = download_data['title']
     download_url = download_data['download_url']
 
-    print DOWNLOADING.format(title), 'video.'
+    print DOWNLOADING.format(title, SONG)
 
     # TODO: set '*.mp3' metadata - could be tricky?
     # TODO: check for duplicates
     r = requests.get(download_url, stream=True)
-    with open('{}.mp3'.format(title), 'wb') as f:
+    with open('{}{}.mp3'.format(directory, title), 'wb') as f:
         for chunk in r.iter_content(chunk_size=1024):
             if chunk:  # filter out keep-alive new chunks
                 f.write(chunk)
                 f.flush()
         f.close()
 
-    print DOWNLOAD_FINISHED
+    print DOWNLOAD_FINISHED.format(title, SONG)
 
 
-def get_single_song(url):
+def get_single_song(url, directory=DEFAULT_DIRECTORY):
     # TODO: documentation
     '''
     '''
 
     download_data = get_download_data(url)
-    download_song(download_data)
+    download_song(download_data, directory=directory)
 
 
-def get_multiple_songs(songs_urls):
+def get_multiple_songs(songs):
     # TODO: documentation
     '''
     '''
 
-    # TODO: add a counter, like "song 1/12"
+    playlist_name = songs['playlist_name']
+    songs_urls = songs['songs_urls']
 
+    # TODO: check if such directory already exists
+    directory = DEFAULT_DIRECTORY + playlist_name + '/'
+    os.makedirs(directory)
+
+    print DOWNLOADING.format(playlist_name, PLAYLIST)
+
+    # TEST
+    # TURNED OFF FOR TESTING
+    # return
+
+    # TODO: add a counter, like "song 1/12"
     for song_url in songs_urls:
-        get_single_song(song_url)
+        get_single_song(song_url, directory=directory)
+
+    print DOWNLOAD_FINISHED.format(playlist_name, SONG)
 
 
 def get_music(system_arguments):
@@ -189,25 +238,28 @@ def get_music(system_arguments):
             print INVALID_URL
             return
 
-        # if system argument is an url to a video
-        if url_type == VIDEO:
+        # if system argument is an url to a song
+        if url_type == SONG:
             get_single_song(url)
             continue
 
         # if system argument is an url to a playlist
         if url_type == PLAYLIST:
-            songs_urls = convert_playlist_to_list()
+            songs = convert_playlist_to_dict(url)
         # if system argument is a json file
         else:
-            songs_urls = convert_json_to_list()
+            songs = convert_json_to_list()
 
-        get_multiple_songs(songs_urls)
+        get_multiple_songs(songs)
 
 
 def main(system_arguments):
     # TODO: documentation
     '''
     '''
+
+    # TODO: statistics - measure the time it took to download,
+    # files count, size, anything you can get a hold of.
 
     system_arguments_length = len(system_arguments)
 
