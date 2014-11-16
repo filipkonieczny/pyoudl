@@ -1,2 +1,3 @@
 requests==2.4.3
 beautifulsoup4==4.3.2
+dryscrape==0.9.1
