@@ -20,17 +20,19 @@ from bs4 import BeautifulSoup
 
 
 # constant variables
-# TODO: format messages
 BASE_YOUTUBE_MP3_URL = 'http://www.youtube-mp3.org'
 BASE_YOUTUBE_URL = 'http://www.youtube.com'
 
+# TODO: windows directory path workaround
 DEFAULT_DIRECTORY = 'music/'
 
+# url types
 PLAYLIST = 'playlist'
 SONG = 'song'
 JSON = 'json'
 INVALID = 'invalid'
 
+# TODO: format messages
 HELLO = '\nHello!\n\n'
 GOODBYE = '\n\nGoodbye!\n'
 NO_URL_SUPPLIED = 'No url supplied!'
@@ -84,16 +86,11 @@ def convert_playlist_to_dict(url):
     songs = {}
     songs_urls = []
 
-    # TEST
-    # HARDCODED FOR TESTING REASONS
-    url = 'https://www.youtube.com/playlist?list=PL49BB38CDC673E900'
-
     session = dryscrape.Session()
     session.visit(url)
     response = session.body()
     soup = BeautifulSoup(response)
 
-    # TEST
     playlist_name = soup.find_all('meta')[0].get('content')
     songs['playlist_name'] = playlist_name
     for link in soup.find_all('a'):
@@ -103,12 +100,6 @@ def convert_playlist_to_dict(url):
             song_url = BASE_YOUTUBE_URL + link
             if song_url not in songs_urls:
                 songs_urls.append(song_url)
-
-    # TODO: remove saving log file
-    data = str(soup)
-    f = open('log.html', 'w')
-    f.write(data)
-    f.close()
 
     songs['songs_urls'] = songs_urls
 
@@ -137,12 +128,6 @@ def get_download_data(url):
     session.visit(destination_url)
     response = session.body()
     soup = BeautifulSoup(response)
-
-    # TODO: remove saving log file
-    data = str(soup)
-    f = open('log.html', 'w')
-    f.write(data)
-    f.close()
 
     # scrape song title
     title_data = str(soup.find(id='title'))
@@ -213,10 +198,6 @@ def get_multiple_songs(songs):
     os.makedirs(directory)
 
     print DOWNLOADING.format(playlist_name, PLAYLIST)
-
-    # TEST
-    # TURNED OFF FOR TESTING
-    # return
 
     # TODO: add a counter, like "song 1/12"
     for song_url in songs_urls:
