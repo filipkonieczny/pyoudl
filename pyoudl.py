@@ -7,17 +7,20 @@
 
 
 # imports
-import requests
 import sys
+
+import requests
+import dryscrape
 from bs4 import BeautifulSoup
 
 
-# TODO: format messages
 # constant variables
+# TODO: format messages
 HELLO = '\nHello!\n\n'
 GOODBYE = '\n\nGoodbye!\n'
 NO_URL_SUPPLIED = 'No url supplied!'
 INVALID_URL = 'Invalid url!'
+BASE_URL = 'http://www.youtube-mp3.org'
 
 
 # functions
@@ -26,6 +29,7 @@ def url_validation(url):
     '''
     '''
 
+    # TODO: url_validation
     return True
 
 
@@ -34,34 +38,50 @@ def get_download_url(url):
     '''
     '''
 
-    # HARDCODED FOR TESTING PURPOSES
-    url = 'http://www.youtube.com/watch?v=FsfrsLxt0l8'
+    # TODO: add information for user to know what's going on
 
-    # HARDCODED FOR TESTING PURPOSES
-    song_id = url  # TODO: determine song_id based on url
-    song_id = 'FsfrsLxt0l8'
+    song_id = url.split('?v=')[-1]
 
-    # url to go to
-    destination_url = 'http://www.youtube-mp3.org/?c#v={}'.format(song_id)
+    # TODO: documentation
+    destination_url = '{}/?c#v={}'.format(BASE_URL, song_id)
+    session = dryscrape.Session()
+    session.visit(destination_url)
+    response = session.body()
+    soup = BeautifulSoup(response)
 
-    # crawl information from destination url
-    r = requests.get(destination_url)
-    soup = BeautifulSoup(r.content)
-    print soup.prettify()  # TODO: convince youtube-mp3.org that JS is enabled
+    # TODO: remove saving log file
+    data = str(soup)
+    f = open('log.html', 'w')
+    f.write(data)
+    f.close()
 
-    return
+    # TODO: documentation
+    download_url = ''
+    for link in soup.find_all('a'):
+        link = link.get('href')
+        if '/get?ab=' in link:
+            download_url = link
+            break
+
+    download_url = '{}{}'.format(BASE_URL, download_url)
+
+    return download_url
 
 
-def download_song(url):
+def download_song(download_url):
     # TODO: documentation
     '''
     '''
 
-    # HARDCODED FOR TESTING PURPOSES
-    song_name = 'david guetta - dangerous ft. sam martin'
-    download_url = get_download_url(url)
-    download_url = 'http://www.youtube-mp3.org/get?ab=128&video_id=FsfrsLxt0l8&h=8cb6d623bcf4fc8957bc7b9174bd33db&r=1415214691386.1618413236&s=115694'
+    # TODO: add information for user to know what's going on
 
+    # HARDCODED FOR TESTING PURPOSES
+    # TODO: crawl song name
+    song_name = 'david guetta - dangerous ft. sam martin'
+    song_name = 'foo'
+
+    # TODO: set '*.mp3' metadata
+    # TODO: check for duplicates
     r = requests.get(download_url, stream=True)
     with open('{}.mp3'.format(song_name), 'wb') as f:
         for chunk in r.iter_content(chunk_size=1024):
@@ -71,12 +91,13 @@ def download_song(url):
         f.close()
 
 
-def get_single_song():
+def get_single_song(url):
     # TODO: documentation
     '''
     '''
 
-    pass
+    download_url = get_download_url(url)
+    download_song(download_url)
 
 
 def get_multiple_songs():
@@ -92,16 +113,14 @@ def get_music(url):
     '''
     '''
 
-    download_song(url)
+    # TODO: determine if it's a playlist
+    get_single_song(url)
 
 
 def main(system_arguments):
     # TODO: documentation
     '''
     '''
-
-    # HARDCODED FOR TESTING PURPOSES
-    system_arguments = ('pyoudl.py', 'http://www.youtube.com/watch?v=FsfrsLxt0l8')
 
     system_arguments_length = len(system_arguments)
 
@@ -121,7 +140,6 @@ def main(system_arguments):
             get_music(url)
         else:
             print INVALID_URL
-            return
 
     print GOODBYE
 
