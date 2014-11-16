@@ -6,6 +6,10 @@
 # description
 
 
+# TODO: enable downloading Streamus playlists based on a json file
+# TODO: add '*.mp3' metadata based on youtube's guess
+
+
 # imports
 import sys
 
@@ -20,6 +24,8 @@ HELLO = '\nHello!\n\n'
 GOODBYE = '\n\nGoodbye!\n'
 NO_URL_SUPPLIED = 'No url supplied!'
 INVALID_URL = 'Invalid url!'
+DOWNLOADING = "Downloading: '{}'"
+DOWNLOAD_FINISHED = 'Download finished!\n'
 BASE_URL = 'http://www.youtube-mp3.org'
 
 
@@ -29,16 +35,17 @@ def url_validation(url):
     '''
     '''
 
-    # TODO: url_validation
-    return True
+    if 'http://youtu.be' in url or \
+       'https://www.youtube.com' in url:
+       return True
+
+    return False
 
 
-def get_download_url(url):
+def get_download_data(url):
     # TODO: documentation
     '''
     '''
-
-    # TODO: add information for user to know what's going on
 
     song_id = url.split('?v=')[-1]
 
@@ -55,7 +62,13 @@ def get_download_url(url):
     f.write(data)
     f.close()
 
+    # scrape song title
+    title_data = str(soup.find(id='title'))
+    title_data = title_data.split('</')[-2]
+    title = title_data[3:]
+
     # TODO: documentation
+    # scrape download url
     download_url = ''
     for link in soup.find_all('a'):
         link = link.get('href')
@@ -65,30 +78,35 @@ def get_download_url(url):
 
     download_url = '{}{}'.format(BASE_URL, download_url)
 
-    return download_url
+    data = {
+        'title': title,
+        'download_url': download_url
+    }
+
+    return data
 
 
-def download_song(download_url):
+def download_song(download_data):
     # TODO: documentation
     '''
     '''
 
-    # TODO: add information for user to know what's going on
+    title = download_data['title']
+    download_url = download_data['download_url']
 
-    # HARDCODED FOR TESTING PURPOSES
-    # TODO: crawl song name
-    song_name = 'david guetta - dangerous ft. sam martin'
-    song_name = 'foo'
+    print DOWNLOADING.format(title)
 
-    # TODO: set '*.mp3' metadata
+    # TODO: set '*.mp3' metadata - could be tricky?
     # TODO: check for duplicates
     r = requests.get(download_url, stream=True)
-    with open('{}.mp3'.format(song_name), 'wb') as f:
+    with open('{}.mp3'.format(title), 'wb') as f:
         for chunk in r.iter_content(chunk_size=1024):
             if chunk:  # filter out keep-alive new chunks
                 f.write(chunk)
                 f.flush()
         f.close()
+
+    print DOWNLOAD_FINISHED
 
 
 def get_single_song(url):
@@ -96,8 +114,8 @@ def get_single_song(url):
     '''
     '''
 
-    download_url = get_download_url(url)
-    download_song(download_url)
+    download_data = get_download_data(url)
+    download_song(download_data)
 
 
 def get_multiple_songs():
@@ -105,6 +123,7 @@ def get_multiple_songs():
     '''
     '''
 
+    # TODO: add a counter, like "song 1/12"
     pass
 
 
