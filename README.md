@@ -38,8 +38,9 @@ Usage
 -----
 ```Pyoudl``` accepts various forms of input. Makes use of ```Python```'s system arguments to download the songs you want. Just run the script with target link and you're good to go. Example usage:
 ```
-$ python pyoudl.py [http://youtu.be/_OBlgSz8sSM](http://youtu.be/_OBlgSz8sSM)
+$ python pyoudl.py http://youtu.be/_OBlgSz8sSM
 ```
+Playlists or multiple arguments are also accepted.
 
 
 Troubleshooting
