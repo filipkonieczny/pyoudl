@@ -43,8 +43,12 @@ DOWNLOAD_FINISHED = '{} {} download finished!\n'
 
 # functions
 def url_validation(url):
-    # TODO: documentation
     '''
+    Check if 'url' is valid by comparing it to YouTube URL.
+
+    >>> url_validation('http://www.youtube.com/')
+    True
+
     '''
 
     if not isinstance(url, type('')):
@@ -53,7 +57,6 @@ def url_validation(url):
     if 'youtu.be' in url or \
        'youtube.com' in url:
         return True
-
     return False
 
 
